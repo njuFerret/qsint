@@ -6,10 +6,7 @@
 #include <QLabel>
 #include <QVBoxLayout>
 
-
-namespace QSint
-{
-
+namespace QSint {
 
 /**
     \brief Class representing a panel of actions similar to Windows Vista/7 control panel items.
@@ -152,100 +149,98 @@ namespace QSint
     \endcode
 
 */
-class ActionBox : public QFrame
-{
-    Q_OBJECT
+class ActionBox : public QFrame {
+  Q_OBJECT
 
-    Q_PROPERTY(QPixmap icon READ icon WRITE setIcon)
-    Q_PROPERTY(ActionLabel header READ header)
+  Q_PROPERTY(QPixmap icon READ icon WRITE setIcon)
+  Q_PROPERTY(ActionLabel header READ header)
 
 public:
-    /** Constructor.
-      */
-    explicit ActionBox(QWidget *parent = 0);
-    /** Constructor.
-      */
-    explicit ActionBox(const QString & headerText, QWidget *parent = 0);
-    /** Constructor.
-      */
-    explicit ActionBox(const QPixmap & icon, const QString & headerText, QWidget *parent = 0);
+  /** Constructor.
+   */
+  explicit ActionBox(QWidget *parent = 0);
+  /** Constructor.
+   */
+  explicit ActionBox(const QString &headerText, QWidget *parent = 0);
+  /** Constructor.
+   */
+  explicit ActionBox(const QPixmap &icon, const QString &headerText, QWidget *parent = 0);
 
-    /** Sets icon of the ActionBox to \a icon.
-      */
-    void setIcon(const QPixmap & icon);
-    /** Returns icon of the ActionBox.
-      */
-    inline const QPixmap* icon() const { return iconLabel->pixmap(); }
+  /** Sets icon of the ActionBox to \a icon.
+   */
+  void setIcon(const QPixmap &icon);
+  /** Returns icon of the ActionBox.
+   */
+  inline const QPixmap icon() const { return iconLabel->pixmap(); }
 
-    /** Returns header item of the ActionBox.
-      */
-    inline ActionLabel* header() const { return headerLabel; }
+  /** Returns header item of the ActionBox.
+   */
+  inline ActionLabel *header() const { return headerLabel; }
 
-    /** Creates action item from the \a action and returns it.
+  /** Creates action item from the \a action and returns it.
 
-      By default, action is added to the default vertical layout, i.e. subsequent
-      calls of this function will create several actions arranged vertically,
-      one below another.
+    By default, action is added to the default vertical layout, i.e. subsequent
+    calls of this function will create several actions arranged vertically,
+    one below another.
 
-      You can add action to the specified layout passing it as \a l parameter.
-      This allows to do custom actions arrangements, i.e. horizontal etc.
+    You can add action to the specified layout passing it as \a l parameter.
+    This allows to do custom actions arrangements, i.e. horizontal etc.
 
-      \since 0.2
-      */
-    ActionLabel* createItem(QAction * action, QLayout * l = 0);
+    \since 0.2
+    */
+  ActionLabel *createItem(QAction *action, QLayout *l = 0);
 
-    /** Creates action items from the \a actions list and returns the list of action items.
-      \since 0.2
-      */
-    QList<ActionLabel*> createItems(QList<QAction*> actions);
+  /** Creates action items from the \a actions list and returns the list of action items.
+    \since 0.2
+    */
+  QList<ActionLabel *> createItems(QList<QAction *> actions);
 
-    /** Adds an action with \a text to the ActionBox and returns action item.
-      */
-    ActionLabel* createItem(const QString & text = "", QLayout * l = 0);
-    /** Adds an action with \a icon and \a text to the ActionBox and returns action item.
+  /** Adds an action with \a text to the ActionBox and returns action item.
+   */
+  ActionLabel *createItem(const QString &text = "", QLayout *l = 0);
+  /** Adds an action with \a icon and \a text to the ActionBox and returns action item.
 
-      This function acts just like previous one. See the description above.
-      */
-    ActionLabel* createItem(const QPixmap & icon, const QString & text, QLayout * l = 0);
+    This function acts just like previous one. See the description above.
+    */
+  ActionLabel *createItem(const QPixmap &icon, const QString &text, QLayout *l = 0);
 
-    /** Adds a spacer and returns spacer item.
+  /** Adds a spacer and returns spacer item.
 
-      By default, a spacer is added to the default vertical layout.
-      You can add a spacer to the specified layout passing it as \a l parameter.
-      */
-    QSpacerItem* createSpacer(QLayout * l = 0);
+    By default, a spacer is added to the default vertical layout.
+    You can add a spacer to the specified layout passing it as \a l parameter.
+    */
+  QSpacerItem *createSpacer(QLayout *l = 0);
 
-    /** Creates empty horizontal layout.
+  /** Creates empty horizontal layout.
 
-      Use this function to arrange action items into a row.
-      */
-    QLayout* createHBoxLayout();
+    Use this function to arrange action items into a row.
+    */
+  QLayout *createHBoxLayout();
 
-    /** Returns default layout used for actions (typically it's QVBoxLayout).
-      */
-    inline QLayout* itemLayout() const { return dataLayout; }
+  /** Returns default layout used for actions (typically it's QVBoxLayout).
+   */
+  inline QLayout *itemLayout() const { return dataLayout; }
 
-    /** Adds layout \a l to the default layout.
-      */
-    void addLayout(QLayout * l);
-    /** Adds widget \a w to the layout.
+  /** Adds layout \a l to the default layout.
+   */
+  void addLayout(QLayout *l);
+  /** Adds widget \a w to the layout.
 
-      By default, widget is added to the default vertical layout.
-      You can add widget to the specified layout passing it as \a l parameter.
-      */
-    void addWidget(QWidget * w, QLayout * l = 0);
+    By default, widget is added to the default vertical layout.
+    You can add widget to the specified layout passing it as \a l parameter.
+    */
+  void addWidget(QWidget *w, QLayout *l = 0);
 
-    virtual QSize minimumSizeHint() const;
+  virtual QSize minimumSizeHint() const;
 
 protected:
-    void init();
+  void init();
 
-    QVBoxLayout *dataLayout;
-    QLabel *iconLabel;
-    ActionLabel *headerLabel;
+  QVBoxLayout *dataLayout;
+  QLabel *iconLabel;
+  ActionLabel *headerLabel;
 };
 
+}        // namespace QSint
 
-} // namespace
-
-#endif // ACTIONBOX_H
+#endif        // ACTIONBOX_H

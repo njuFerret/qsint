@@ -1,40 +1,38 @@
 #include "actionpanel.h"
-#include "actionpanelscheme.h"
 #include "actiongroup.h"
+#include "actionpanelscheme.h"
 
 #include <QtCore/QVariant>
 
+namespace QSint {
 
-namespace QSint
-{
+ActionPanel::ActionPanel(QWidget *parent) : BaseClass(parent) {
+  setProperty("class", "panel");
 
+  setScheme(ActionPanelScheme::defaultScheme());
 
-ActionPanel::ActionPanel(QWidget *parent) :
-    BaseClass(parent)
-{
-    setProperty("class", "panel");
+  setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
 
-    setScheme(ActionPanelScheme::defaultScheme());
-
-    setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
-
-    QVBoxLayout *vbl = new QVBoxLayout();
-    vbl->setMargin(8);
-    vbl->setSpacing(8);
-    setLayout(vbl);
+  QVBoxLayout *vbl = new QVBoxLayout();
+#if QT_VERSION < 0x050900        // qt.5.9
+  vbl->setMargin(8);
+#else
+  vbl->setContentsMargins(8, 8, 8, 8);
+#endif
+  vbl->setSpacing(8);
+  setLayout(vbl);
 }
 
-void ActionPanel::setScheme(ActionPanelScheme *scheme)
-{
+void ActionPanel::setScheme(ActionPanelScheme *scheme) {
   if (scheme) {
     myScheme = scheme;
     setStyleSheet(myScheme->actionStyle);
 
     // set scheme for children
     QObjectList list(children());
-    foreach(QObject *obj, list) {
-      if (dynamic_cast<ActionGroup*>(obj)) {
-        ((ActionGroup*)obj)->setScheme(scheme);
+    foreach (QObject *obj, list) {
+      if (qobject_cast<ActionGroup *>(obj)) {
+        ((ActionGroup *)obj)->setScheme(scheme);
         continue;
       }
     }
@@ -43,51 +41,39 @@ void ActionPanel::setScheme(ActionPanelScheme *scheme)
   }
 }
 
-//void ActionPanel::paintEvent ( QPaintEvent * event )
+// void ActionPanel::paintEvent ( QPaintEvent * event )
 //{
-//  //QPainter p(this);
+//   //QPainter p(this);
 
 //  //p.setOpacity(0.5);
 //  //p.fillRect(rect(), myScheme->panelBackground);
 //}
 
-void ActionPanel::addWidget(QWidget *w)
-{
+void ActionPanel::addWidget(QWidget *w) {
   if (w)
     layout()->addWidget(w);
 }
 
-void ActionPanel::addStretch(int s)
-{
-  ((QVBoxLayout*)layout())->addStretch(s);
+void ActionPanel::addStretch(int s) { ((QVBoxLayout *)layout())->addStretch(s); }
+
+ActionGroup *ActionPanel::createGroup() {
+  ActionGroup *group = new ActionGroup(this);
+  addWidget(group);
+  return group;
 }
 
-ActionGroup * ActionPanel::createGroup()
-{
-    ActionGroup * group = new ActionGroup(this);
-    addWidget(group);
-    return group;
+ActionGroup *ActionPanel::createGroup(const QString &title, bool expandable) {
+  ActionGroup *box = new ActionGroup(title, expandable, this);
+  addWidget(box);
+  return box;
 }
 
-ActionGroup * ActionPanel::createGroup(const QString &title, bool expandable)
-{
-    ActionGroup * box = new ActionGroup(title, expandable, this);
-    addWidget(box);
-    return box;
+ActionGroup *ActionPanel::createGroup(const QPixmap &icon, const QString &title, bool expandable) {
+  ActionGroup *box = new ActionGroup(icon, title, expandable, this);
+  addWidget(box);
+  return box;
 }
 
-ActionGroup * ActionPanel::createGroup(const QPixmap &icon, const QString &title, bool expandable)
-{
-    ActionGroup * box = new ActionGroup(icon, title, expandable, this);
-    addWidget(box);
-    return box;
-}
+QSize ActionPanel::minimumSizeHint() const { return QSize(200, 150); }
 
-
-QSize ActionPanel::minimumSizeHint() const
-{
-    return QSize(200,150);
-}
-
-
-} // namespace
+}        // namespace QSint

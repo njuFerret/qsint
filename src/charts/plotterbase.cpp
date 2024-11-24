@@ -1,412 +1,317 @@
 #include "plotterbase.h"
 #include "axisbase.h"
 
+namespace QSint {
 
-namespace QSint
-{
+PlotterBase::PlotterBase(QWidget *parent)
+    : QWidget(parent), m_model(0), m_highlight(true), m_textFormatter(NULL), m_valuesAlwaysShown(true), m_repaint(true),
+      m_antiAliasing(true) {
+  m_axisX = m_axisY = 0;
 
+  setBorderPen(QPen(Qt::gray));
+  setBackground(QBrush(Qt::white));
+  setItemPen(QPen(Qt::darkGray));
 
-PlotterBase::PlotterBase(QWidget *parent) :
-    QWidget(parent),
-    m_model(0),
-    m_highlight(true),
-    m_textFormatter(NULL),
-    m_valuesAlwaysShown(true),
-    m_repaint(true),
-    m_antiAliasing(true)
-{
-    m_axisX = m_axisY = 0;
+  setHighlightAlpha(0.5);
+  setHighlightTextColor(Qt::white);
+  setHighlightPen(QPen(Qt::black));
+  setHighlightBrush(QBrush(Qt::gray));
 
-    setBorderPen(QPen(Qt::gray));
-    setBackground(QBrush(Qt::white));
-    setItemPen(QPen(Qt::darkGray));
+  setModel(0);
 
-    setHighlightAlpha(0.5);
-    setHighlightTextColor(Qt::white);
-    setHighlightPen(QPen(Qt::black));
-    setHighlightBrush(QBrush(Qt::gray));
-
-    setModel(0);
-
-    setMouseTracking(true);
+  setMouseTracking(true);
 }
 
+void PlotterBase::setTitle(const QString &title) {
+  m_title = title;
 
-void PlotterBase::setTitle(const QString &title)
-{
-    m_title = title;
-
-    update();
+  update();
 }
 
+void PlotterBase::setTitleColor(const QColor &titleColor) {
+  m_titleColor = titleColor;
 
-void PlotterBase::setTitleColor(const QColor& titleColor)
-{
-    m_titleColor = titleColor;
-
-    update();
+  update();
 }
 
+void PlotterBase::setTitleFont(const QFont &titleFont) {
+  m_titleFont = titleFont;
 
-void PlotterBase::setTitleFont(const QFont &titleFont)
-{
-    m_titleFont = titleFont;
-
-    update();
+  update();
 }
 
+void PlotterBase::setBorderPen(const QPen &pen) {
+  m_pen = pen;
 
-void PlotterBase::setBorderPen(const QPen &pen)
-{
-    m_pen = pen;
-
-    update();
+  update();
 }
 
+void PlotterBase::setBackground(const QBrush &brush) {
+  m_bg = brush;
 
-void PlotterBase::setBackground(const QBrush &brush)
-{
-    m_bg = brush;
-
-    update();
+  update();
 }
 
+void PlotterBase::setItemPen(const QPen &pen) {
+  m_itemPen = pen;
 
-void PlotterBase::setItemPen(const QPen &pen)
-{
-    m_itemPen = pen;
-
-    update();
+  update();
 }
 
+void PlotterBase::enableHighlight(bool on) {
+  m_highlight = on;
 
-void PlotterBase::enableHighlight(bool on)
-{
-    m_highlight = on;
-
-    update();
+  update();
 }
 
+void PlotterBase::setHighlightTextColor(const QColor &color) {
+  m_hlTextColor = color;
 
-void PlotterBase::setHighlightTextColor(const QColor &color)
-{
-    m_hlTextColor = color;
-
-    update();
+  update();
 }
 
+void PlotterBase::setHighlightPen(const QPen &pen) {
+  m_hlPen = pen;
 
-void PlotterBase::setHighlightPen(const QPen &pen)
-{
-    m_hlPen = pen;
-
-    update();
+  update();
 }
 
+void PlotterBase::setHighlightBrush(const QBrush &brush) {
+  m_hlBrush = brush;
 
-void PlotterBase::setHighlightBrush(const QBrush &brush)
-{
-    m_hlBrush = brush;
-
-    update();
+  update();
 }
 
+void PlotterBase::setHighlightAlpha(double alpha) {
+  m_hlAlpha = alpha;
 
-void PlotterBase::setHighlightAlpha(double alpha)
-{
-    m_hlAlpha = alpha;
-
-    update();
+  update();
 }
 
+void PlotterBase::setTextFormat(const QString &textFormat) {
+  m_textFormat = textFormat;
 
-void PlotterBase::setTextFormat(const QString &textFormat)
-{
-    m_textFormat = textFormat;
-
-    update();
+  update();
 }
 
+void PlotterBase::showValuesAlways(bool on) {
+  m_valuesAlwaysShown = on;
 
-void PlotterBase::showValuesAlways(bool on)
-{
-    m_valuesAlwaysShown = on;
-
-    update();
+  update();
 }
 
+QRect PlotterBase::dataRect() const {
+  QRect p_rect(rect());
 
-QRect PlotterBase::dataRect() const
-{
-    QRect p_rect(rect());
+  if (m_axisX)
+    p_rect.setBottom(p_rect.bottom() - m_axisX->offset());
 
-    if (m_axisX)
-        p_rect.setBottom(p_rect.bottom() - m_axisX->offset());
+  if (m_axisY)
+    p_rect.setLeft(p_rect.left() + m_axisY->offset());
 
-    if (m_axisY)
-        p_rect.setLeft(p_rect.left() + m_axisY->offset());
+  if (!m_title.isEmpty()) {
+    QRect textRect = QFontMetrics(m_titleFont).boundingRect(m_title);
+    p_rect.setTop(textRect.height() + 8);        // 4px extra margin
+  }
 
-    if (!m_title.isEmpty())
-    {
-        QRect textRect = QFontMetrics(m_titleFont).boundingRect(m_title);
-        p_rect.setTop(textRect.height() + 8);   // 4px extra margin
-    }
-
-    return p_rect;
+  return p_rect;
 }
 
+void PlotterBase::setModel(QAbstractItemModel *model) {
+  if (m_model)
+    m_model->disconnect(this);
 
-void PlotterBase::setModel(QAbstractItemModel *model)
-{
-    if (m_model)
-        m_model->disconnect(this);
+  m_model = model;
 
-    m_model = model;
+  if (m_axisX)
+    m_axisX->setModel(model);
 
-    if (m_axisX)
-        m_axisX->setModel(model);
+  if (m_axisY)
+    m_axisY->setModel(model);
 
-    if (m_axisY)
-        m_axisY->setModel(model);
+  if (m_model) {
+    connect(m_model, SIGNAL(dataChanged(const QModelIndex &, const QModelIndex &)), this, SLOT(scheduleUpdate()));
 
-    if (m_model)
-    {
-        connect(m_model, SIGNAL(dataChanged(const QModelIndex &,const QModelIndex &)),
-                this, SLOT(scheduleUpdate()));
+    connect(m_model, SIGNAL(headerDataChanged(Qt::Orientation, int, int)), this, SLOT(scheduleUpdate()));
 
-        connect(m_model, SIGNAL(headerDataChanged(Qt::Orientation, int, int)),
-                this, SLOT(scheduleUpdate()));
+    connect(m_model, SIGNAL(columnsInserted(const QModelIndex &, int, int)), this, SLOT(scheduleUpdate()));
 
-        connect(m_model, SIGNAL(columnsInserted(const QModelIndex &, int, int)),
-                this, SLOT(scheduleUpdate()));
+    connect(m_model, SIGNAL(columnsRemoved(const QModelIndex &, int, int)), this, SLOT(scheduleUpdate()));
 
-        connect(m_model, SIGNAL(columnsRemoved(const QModelIndex &, int, int)),
-                this, SLOT(scheduleUpdate()));
+    connect(m_model, SIGNAL(rowsInserted(const QModelIndex &, int, int)), this, SLOT(scheduleUpdate()));
 
-        connect(m_model, SIGNAL(rowsInserted(const QModelIndex &, int, int)),
-                this, SLOT(scheduleUpdate()));
-
-        connect(m_model, SIGNAL(rowsRemoved(const QModelIndex &, int, int)),
-                this, SLOT(scheduleUpdate()));
-    }
+    connect(m_model, SIGNAL(rowsRemoved(const QModelIndex &, int, int)), this, SLOT(scheduleUpdate()));
+  }
 }
 
+void PlotterBase::scheduleUpdate() {
+  m_repaint = true;
 
-void PlotterBase::scheduleUpdate()
-{
-    m_repaint = true;
-
-    update();
+  update();
 }
 
+void PlotterBase::mousePressEvent(QMouseEvent *event) {
+  if (event->button() == Qt::LeftButton) {
+    emit pressed(m_indexUnderMouse);
 
-void PlotterBase::mousePressEvent(QMouseEvent *event)
-{
-    if (event->button() == Qt::LeftButton)
-    {
-        emit pressed(m_indexUnderMouse);
+    m_indexClick = m_indexUnderMouse;
 
-        m_indexClick = m_indexUnderMouse;
-
-        //qDebug() << "pressed: " << m_indexUnderMouse;
-    }
+    // qDebug() << "pressed: " << m_indexUnderMouse;
+  }
 }
 
+void PlotterBase::mouseDoubleClickEvent(QMouseEvent *event) {
+  if (event->button() == Qt::LeftButton) {
+    emit doubleClicked(m_indexUnderMouse);
 
-void PlotterBase::mouseDoubleClickEvent(QMouseEvent *event)
-{
-    if (event->button() == Qt::LeftButton)
-    {
-        emit doubleClicked(m_indexUnderMouse);
-
-        //qDebug() << "doubleClicked: " << m_indexUnderMouse;
-    }
+    // qDebug() << "doubleClicked: " << m_indexUnderMouse;
+  }
 }
 
+void PlotterBase::mouseReleaseEvent(QMouseEvent *event) {
+  if (m_indexClick == m_indexUnderMouse && event->button() == Qt::LeftButton) {
+    emit clicked(m_indexUnderMouse);
 
-void PlotterBase::mouseReleaseEvent(QMouseEvent *event)
-{
-    if (m_indexClick == m_indexUnderMouse && event->button() == Qt::LeftButton)
-    {
-        emit clicked(m_indexUnderMouse);
+    m_indexClick = QModelIndex();
 
-        m_indexClick = QModelIndex();
-
-        //qDebug() << "clicked: " << m_indexUnderMouse;
-    }
+    // qDebug() << "clicked: " << m_indexUnderMouse;
+  }
 }
 
+void PlotterBase::mouseMoveEvent(QMouseEvent *event) {
+  m_mousePos = event->pos();
 
-void PlotterBase::mouseMoveEvent(QMouseEvent *event)
-{
-    m_mousePos = event->pos();
-
-    update();
+  update();
 }
 
+void PlotterBase::leaveEvent(QEvent *event) {
+  m_mousePos = QPoint();
+  m_indexUnderMouse = m_indexClick = QModelIndex();
 
-void PlotterBase::leaveEvent(QEvent *event)
-{
-    m_mousePos = QPoint();
-    m_indexUnderMouse = m_indexClick = QModelIndex();
+  repaint();
 
-    repaint();
-
-    QWidget::leaveEvent(event);
+  QWidget::leaveEvent(event);
 }
 
+void PlotterBase::resizeEvent(QResizeEvent *event) {
+  m_mousePos = QPoint();
+  m_indexUnderMouse = m_indexClick = QModelIndex();
 
-void PlotterBase::resizeEvent(QResizeEvent *event)
-{
-    m_mousePos = QPoint();
-    m_indexUnderMouse = m_indexClick = QModelIndex();
-
-    QWidget::resizeEvent(event);
+  QWidget::resizeEvent(event);
 }
 
+void PlotterBase::paintEvent(QPaintEvent *) {
+  m_indexUnderMouse = m_indexClick = QModelIndex();
 
-void PlotterBase::paintEvent(QPaintEvent *)
-{
-	m_indexUnderMouse = m_indexClick = QModelIndex();
+  QPainter p(this);
 
-    QPainter p(this);
+  if (m_antiAliasing) {
+    p.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
+  }
 
-	if (m_antiAliasing)
-	{
-        p.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing | QPainter::HighQualityAntialiasing);
-	}
+  drawBackground(p);
 
-    drawBackground(p);
+  drawTitle(p);
 
-    drawTitle(p);
+  drawAxes(p);
 
-    drawAxes(p);
+  drawContent(p);
 
-    drawContent(p);
-
-    drawForeground(p);
+  drawForeground(p);
 }
 
+void PlotterBase::drawBackground(QPainter &p) { p.fillRect(rect(), m_bg); }
 
-void PlotterBase::drawBackground(QPainter &p)
-{
-    p.fillRect(rect(), m_bg);
+void PlotterBase::drawForeground(QPainter &p) {
+  // surrounding border
+  p.setOpacity(1);
+  p.setPen(m_pen);
+  p.setBrush(Qt::NoBrush);
+  p.drawRect(rect());
 }
 
+void PlotterBase::drawTitle(QPainter &p) {
+  if (!m_title.isEmpty()) {
+    QRect titleRect(rect());
+    titleRect.setBottom(dataRect().top() - 1);
 
-void PlotterBase::drawForeground(QPainter &p)
-{
-    // surrounding border
     p.setOpacity(1);
-    p.setPen(m_pen);
-    p.setBrush(Qt::NoBrush);
-    p.drawRect(rect());
+    p.setPen(QPen(m_titleColor));
+    p.setFont(m_titleFont);
+    p.drawText(titleRect, Qt::AlignCenter, m_title);
+  }
 }
 
+void PlotterBase::drawAxes(QPainter &p) {
+  // first grid
+  if (m_axisX)
+    m_axisX->drawGrid(p);
 
-void PlotterBase::drawTitle(QPainter &p)
-{
-    if (!m_title.isEmpty())
-    {
-        QRect titleRect(rect());
-        titleRect.setBottom(dataRect().top()-1);
+  if (m_axisY)
+    m_axisY->drawGrid(p);
 
-        p.setOpacity(1);
-        p.setPen(QPen(m_titleColor));
-        p.setFont(m_titleFont);
-        p.drawText(titleRect, Qt::AlignCenter, m_title);
-    }
+  // then lines
+  if (m_axisX)
+    m_axisX->drawAxisLine(p);
+
+  if (m_axisY)
+    m_axisY->drawAxisLine(p);
 }
 
+QBrush PlotterBase::brushFromIndex(const QModelIndex &index) const {
+  if (!m_model || !index.isValid())
+    return QBrush();
 
-void PlotterBase::drawAxes(QPainter &p)
-{
-    // first grid
-    if (m_axisX)
-        m_axisX->drawGrid(p);
-
-    if (m_axisY)
-        m_axisY->drawGrid(p);
-
-    // then lines
-    if (m_axisX)
-        m_axisX->drawAxisLine(p);
-
-    if (m_axisY)
-        m_axisY->drawAxisLine(p);
+  QVariant v = m_model->data(index, Qt::BackgroundRole);
+  if (v.canConvert<QBrush>()) {
+    return v.value<QBrush>();
+  } else {
+    return m_model->headerData(index.row(), Qt::Vertical, Qt::BackgroundRole).value<QBrush>();
+  }
 }
 
+QString PlotterBase::textFromIndex(const QModelIndex &index) const {
+  if (!m_model || !index.isValid())
+    return QString();
 
-QBrush PlotterBase::brushFromIndex(const QModelIndex& index) const
-{
-	if (!m_model || !index.isValid())
-		return QBrush();
+  QString text = m_model->headerData(index.row(), Qt::Vertical, Qt::DisplayRole).toString();
+  if (!text.isNull())
+    return text;
 
-	QVariant v = m_model->data(index, Qt::BackgroundRole);
-	if (v.canConvert<QBrush>())
-	{
-		return v.value<QBrush>();
-	}
-	else
-	{
-		return m_model->headerData(index.row(), Qt::Vertical, Qt::BackgroundRole).value<QBrush>();
-	}
+  return m_model->data(index, Qt::DisplayRole).toString();
 }
 
+double PlotterBase::valueFromIndex(const QModelIndex &index) const {
+  if (!m_model || !index.isValid())
+    return 0.0;
 
-QString PlotterBase::textFromIndex(const QModelIndex& index) const
-{
-	if (!m_model || !index.isValid())
-		return QString();
+  QVariant v1 = m_model->data(index, Qt::EditRole);
+  if (v1.canConvert<double>())
+    return v1.toDouble();
 
-	QString text = m_model->headerData(index.row(), Qt::Vertical, Qt::DisplayRole).toString();
-	if (!text.isNull())
-		return text;
-
-	return m_model->data(index, Qt::DisplayRole).toString();
+  return 0.0;
 }
 
+QString PlotterBase::formattedValue(double value, const QModelIndex &index) const {
+  if (m_textFormatter) {
+    return m_textFormatter->text(index);
+  }
 
-double PlotterBase::valueFromIndex(const QModelIndex& index) const
-{
-	if (!m_model || !index.isValid())
-		return 0.0;
+  if (!m_textFormat.isEmpty()) {
+    return m_textFormat.arg(value);
+  }
 
-	QVariant v1 = m_model->data(index, Qt::EditRole);
-	if (v1.canConvert<double>())
-		return v1.toDouble();
-
-	return 0.0;
+  return QString::number(value);
 }
 
+void PlotterBase::setIndexUnderMouse(const QModelIndex &index) {
+  if (m_indexUnderMouse != index) {
+    m_indexUnderMouse = index;
 
-QString PlotterBase::formattedValue(double value, const QModelIndex& index) const
-{
-    if (m_textFormatter)
-    {
-        return m_textFormatter->text(index);
-    }
+    emit entered(index);
 
-    if (!m_textFormat.isEmpty())
-    {
-		return m_textFormat.arg(value);
-    }
-
-	return QString::number(value);
+    onItemEntered(index);
+  }
 }
 
-
-void PlotterBase::setIndexUnderMouse(const QModelIndex& index)
-{
-    if (m_indexUnderMouse != index)
-    {
-        m_indexUnderMouse = index;
-
-        emit entered(index);
-
-		onItemEntered(index);
-	}
-}
-
-
-} // namespace
+}        // namespace QSint

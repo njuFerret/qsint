@@ -1,7 +1,7 @@
 TARGET = qsint
 
 TEMPLATE = lib
-CONFIG += staticlib c++11
+CONFIG += staticlib c++17
 
 win32-msvc*{
     QMAKE_CXXFLAGS += /MP

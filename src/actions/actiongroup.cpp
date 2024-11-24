@@ -1,46 +1,42 @@
 #include "actiongroup.h"
-#include "taskheader_p.h"
-#include "taskgroup_p.h"
 #include "actionlabel.h"
 #include "actionpanelscheme.h"
+#include "taskgroup_p.h"
+#include "taskheader_p.h"
 
 #include <QtGui/QPainter>
 
+namespace QSint {
 
-namespace QSint
-{
-
-
-ActionGroup::ActionGroup(QWidget *parent)
-  : QWidget(parent)
-{
-    myHeader = new TaskHeader(QPixmap(), "", false, this);
-    myHeader->setVisible(false);
-    init(false);
+ActionGroup::ActionGroup(QWidget *parent) : QWidget(parent) {
+  myHeader = new TaskHeader(QPixmap(), "", false, this);
+  myHeader->setVisible(false);
+  init(false);
 }
 
-ActionGroup::ActionGroup(const QString &title, bool expandable, QWidget *parent)
-  : QWidget(parent)
-{
-    myHeader = new TaskHeader(QPixmap(), title, expandable, this);
-    init(true);
+ActionGroup::ActionGroup(const QString &title, bool expandable, QWidget *parent) : QWidget(parent) {
+  myHeader = new TaskHeader(QPixmap(), title, expandable, this);
+  init(true);
 }
 
 ActionGroup::ActionGroup(const QPixmap &icon, const QString &title, bool expandable, QWidget *parent)
-  : QWidget(parent)
-{
-    myHeader = new TaskHeader(icon, title, expandable, this);
-    init(true);
+    : QWidget(parent) {
+  myHeader = new TaskHeader(icon, title, expandable, this);
+  init(true);
 }
 
-void ActionGroup::init(bool header)
-{
+void ActionGroup::init(bool header) {
   m_foldStep = 0;
 
   myScheme = ActionPanelScheme::defaultScheme();
 
   QVBoxLayout *vbl = new QVBoxLayout();
+  // vbl->setMargin(0);
+#if QT_VERSION < 0x050F00        // qt.5.15
   vbl->setMargin(0);
+#else
+  vbl->setContentsMargins(0, 0, 0, 0);
+#endif
   vbl->setSpacing(0);
   setLayout(vbl);
 
@@ -56,57 +52,48 @@ void ActionGroup::init(bool header)
   connect(myHeader, SIGNAL(activated()), this, SLOT(showHide()));
 }
 
-void ActionGroup::setScheme(ActionPanelScheme *pointer)
-{
+void ActionGroup::setScheme(ActionPanelScheme *pointer) {
   myScheme = pointer;
   myHeader->setScheme(pointer);
   myGroup->setScheme(pointer);
   update();
 }
 
-QBoxLayout* ActionGroup::groupLayout()
-{
-  return myGroup->groupLayout();
+QBoxLayout *ActionGroup::groupLayout() { return myGroup->groupLayout(); }
+
+ActionLabel *ActionGroup::addAction(QAction *action, bool addToLayout, bool addStretch) {
+  if (!action)
+    return 0;
+
+  ActionLabel *label = new ActionLabel(action, this);
+  myGroup->addActionLabel(label, addToLayout, addStretch);
+
+  return label;
 }
 
-ActionLabel* ActionGroup::addAction(QAction *action, bool addToLayout, bool addStretch)
-{
-    if (!action)
-        return 0;
+ActionLabel *ActionGroup::addActionLabel(ActionLabel *label, bool addToLayout, bool addStretch) {
+  if (!label)
+    return 0;
 
-    ActionLabel* label = new ActionLabel(action, this);
-    myGroup->addActionLabel(label, addToLayout, addStretch);
+  myGroup->addActionLabel(label, addToLayout, addStretch);
 
-    return label;
+  return label;
 }
 
-ActionLabel* ActionGroup::addActionLabel(ActionLabel *label, bool addToLayout, bool addStretch)
-{
-    if (!label)
-        return 0;
-
-    myGroup->addActionLabel(label, addToLayout, addStretch);
-
-    return label;
+bool ActionGroup::addWidget(QWidget *widget, bool addToLayout, bool addStretch) {
+  return myGroup->addWidget(widget, addToLayout, addStretch);
 }
 
-bool ActionGroup::addWidget(QWidget *widget, bool addToLayout, bool addStretch)
-{
-    return myGroup->addWidget(widget, addToLayout, addStretch);
-}
-
-void ActionGroup::showHide()
-{
+void ActionGroup::showHide() {
   if (m_foldStep)
     return;
 
   if (!myHeader->expandable())
     return;
 
-  if (myGroup->isVisible())
-  {
+  if (myGroup->isVisible()) {
     m_foldPixmap = myGroup->transparentRender();
-//    m_foldPixmap = QPixmap::grabWidget(myGroup, myGroup->rect());
+    //    m_foldPixmap = QPixmap::grabWidget(myGroup, myGroup->rect());
 
     m_tempHeight = m_fullHeight = myGroup->height();
     m_foldDelta = m_fullHeight / myScheme->groupFoldSteps;
@@ -118,9 +105,7 @@ void ActionGroup::showHide()
     myDummy->show();
 
     QTimer::singleShot(myScheme->groupFoldDelay, this, SLOT(processHide()));
-  }
-  else
-  {
+  } else {
     m_foldStep = myScheme->groupFoldSteps;
     m_foldDirection = 1;
     m_tempHeight = 0;
@@ -131,8 +116,7 @@ void ActionGroup::showHide()
   myDummy->show();
 }
 
-void ActionGroup::processHide()
-{
+void ActionGroup::processHide() {
   if (!--m_foldStep) {
     myDummy->setFixedHeight(0);
     myDummy->hide();
@@ -145,20 +129,19 @@ void ActionGroup::processHide()
 
   m_tempHeight -= m_foldDelta;
   myDummy->setFixedHeight(m_tempHeight);
-  setFixedHeight(myDummy->height()+myHeader->height());
+  setFixedHeight(myDummy->height() + myHeader->height());
 
   QTimer::singleShot(myScheme->groupFoldDelay, this, SLOT(processHide()));
 
   setUpdatesEnabled(true);
 }
 
-void ActionGroup::processShow()
-{
+void ActionGroup::processShow() {
   if (!--m_foldStep) {
     myDummy->hide();
     m_foldPixmap = QPixmap();
     myGroup->show();
-    setFixedHeight(m_fullHeight+myHeader->height());
+    setFixedHeight(m_fullHeight + myHeader->height());
     setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
     setMaximumHeight(9999);
     setMinimumHeight(0);
@@ -169,15 +152,14 @@ void ActionGroup::processShow()
 
   m_tempHeight += m_foldDelta;
   myDummy->setFixedHeight(m_tempHeight);
-  setFixedHeight(myDummy->height()+myHeader->height());
+  setFixedHeight(myDummy->height() + myHeader->height());
 
   QTimer::singleShot(myScheme->groupFoldDelay, this, SLOT(processShow()));
 
   setUpdatesEnabled(true);
 }
 
-void ActionGroup::paintEvent ( QPaintEvent * /*event*/ )
-{
+void ActionGroup::paintEvent(QPaintEvent * /*event*/) {
   QPainter p(this);
 
   if (myDummy->isVisible()) {
@@ -185,66 +167,36 @@ void ActionGroup::paintEvent ( QPaintEvent * /*event*/ )
       if (m_foldDirection < 0)
         p.setOpacity((double)m_foldStep / myScheme->groupFoldSteps);
       else
-        p.setOpacity((double)(myScheme->groupFoldSteps-m_foldStep) / myScheme->groupFoldSteps);
+        p.setOpacity((double)(myScheme->groupFoldSteps - m_foldStep) / myScheme->groupFoldSteps);
     }
 
-    switch (myScheme->groupFoldEffect)
-    {
-      case ActionPanelScheme::ShrunkFolding:
-        p.drawPixmap(myDummy->pos(), m_foldPixmap.scaled(myDummy->size()) );
-        break;
+    switch (myScheme->groupFoldEffect) {
+    case ActionPanelScheme::ShrunkFolding: p.drawPixmap(myDummy->pos(), m_foldPixmap.scaled(myDummy->size())); break;
 
-      case ActionPanelScheme::SlideFolding:
-        p.drawPixmap(myDummy->pos(), m_foldPixmap,
-                     QRect(0, m_foldPixmap.height()-myDummy->height(),
-                           m_foldPixmap.width(), myDummy->width()
-                           )  );
-        break;
+    case ActionPanelScheme::SlideFolding:
+      p.drawPixmap(myDummy->pos(), m_foldPixmap,
+                   QRect(0, m_foldPixmap.height() - myDummy->height(), m_foldPixmap.width(), myDummy->width()));
+      break;
 
-      default:
-        p.drawPixmap(myDummy->pos(), m_foldPixmap);
+    default: p.drawPixmap(myDummy->pos(), m_foldPixmap);
     }
 
     return;
   }
 }
 
+bool ActionGroup::isExpandable() const { return myHeader->expandable(); }
 
-bool ActionGroup::isExpandable() const
-{
-    return myHeader->expandable();
-}
+void ActionGroup::setExpandable(bool expandable) { myHeader->setExpandable(expandable); }
 
-void ActionGroup::setExpandable(bool expandable)
-{
-    myHeader->setExpandable(expandable);
-}
+bool ActionGroup::hasHeader() const { return myHeader->isVisible(); }
 
-bool ActionGroup::hasHeader() const
-{
-    return myHeader->isVisible();
-}
+void ActionGroup::setHeader(bool enable) { myHeader->setVisible(enable); }
 
-void ActionGroup::setHeader(bool enable)
-{
-    myHeader->setVisible(enable);
-}
+QString ActionGroup::headerText() const { return myHeader->myTitle->text(); }
 
-QString ActionGroup::headerText() const
-{
-    return myHeader->myTitle->text();
-}
+void ActionGroup::setHeaderText(const QString &headerText) { myHeader->myTitle->setText(headerText); }
 
-void ActionGroup::setHeaderText(const QString & headerText)
-{
-    myHeader->myTitle->setText(headerText);
-}
+QSize ActionGroup::minimumSizeHint() const { return QSize(200, 100); }
 
-
-QSize ActionGroup::minimumSizeHint() const
-{
-    return QSize(200,100);
-}
-
-
-}
+}        // namespace QSint

@@ -1,116 +1,99 @@
 #include "actionlabel.h"
 
-#include <QStyleOptionToolButton>
 #include <QApplication>
+#include <QStyleOptionToolButton>
 
+namespace QSint {
 
-namespace QSint
-{
+const char *ActionLabelStyle = "QSint--ActionLabel[class='action'] {"
+                               "background-color: transparent;"
+                               "border: 1px solid transparent;"
+                               "color: #0033ff;"
+                               "text-align: left;"
+                               "font: 11px;"
+                               "}"
 
+                               "QSint--ActionLabel[class='action']:!enabled {"
+                               "color: #999999;"
+                               "}"
 
-const char* ActionLabelStyle =
-    "QSint--ActionLabel[class='action'] {"
-        "background-color: transparent;"
-        "border: 1px solid transparent;"
-        "color: #0033ff;"
-        "text-align: left;"
-        "font: 11px;"
-    "}"
+                               "QSint--ActionLabel[class='action']:hover {"
+                               "color: #0099ff;"
+                               "text-decoration: underline;"
+                               "}"
 
-    "QSint--ActionLabel[class='action']:!enabled {"
-        "color: #999999;"
-    "}"
+                               "QSint--ActionLabel[class='action']:focus {"
+                               "border: 1px dotted black;"
+                               "}"
 
-    "QSint--ActionLabel[class='action']:hover {"
-        "color: #0099ff;"
-        "text-decoration: underline;"
-    "}"
+                               "QSint--ActionLabel[class='action']:on {"
+                               "background-color: #ddeeff;"
+                               "color: #006600;"
+                               "}";
 
-    "QSint--ActionLabel[class='action']:focus {"
-        "border: 1px dotted black;"
-    "}"
+ActionLabel::ActionLabel(QWidget *parent) : QToolButton(parent) { init(); }
 
-    "QSint--ActionLabel[class='action']:on {"
-        "background-color: #ddeeff;"
-        "color: #006600;"
-    "}"
-;
+ActionLabel::ActionLabel(QAction *action, QWidget *parent) : QToolButton(parent) {
+  init();
 
-
-ActionLabel::ActionLabel(QWidget *parent) :
-    QToolButton(parent)
-{
-    init();
+  setDefaultAction(action);
 }
 
-ActionLabel::ActionLabel(QAction *action, QWidget *parent) :
-    QToolButton(parent)
-{
-    init();
+void ActionLabel::init() {
+  setProperty("class", "action");
 
-    setDefaultAction(action);
+  setCursor(Qt::PointingHandCursor);
+
+  setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+
+  setStyleSheet(QString(ActionLabelStyle));
+
+  setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+
+  setFocusPolicy(Qt::StrongFocus);
 }
 
-void ActionLabel::init()
-{
-    setProperty("class", "action");
+QSize ActionLabel::sizeHint() const {
+  ensurePolished();
 
-    setCursor(Qt::PointingHandCursor);
+  int w = 0, h = 0;
 
-    setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+  QStyleOptionToolButton opt;
+  initStyleOption(&opt);
 
-    setStyleSheet(QString(ActionLabelStyle));
+  QString s(text());
+  bool empty = s.isEmpty();
+  if (empty)
+    s = QString::fromLatin1("XXXX");
+  QFontMetrics fm = fontMetrics();
+  QSize sz = fm.size(Qt::TextShowMnemonic, s);
+  if (!empty || !w)
+    w += sz.width();
+  if (!empty || !h)
+    h = qMax(h, sz.height());
+  opt.rect.setSize(QSize(w, h));        // PM_MenuButtonIndicator depends on the height
 
-    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+  if (!icon().isNull()) {
+    int ih = opt.iconSize.height();
+    int iw = opt.iconSize.width() + 4;
+    w += iw;
+    h = qMax(h, ih);
+  }
 
-    setFocusPolicy(Qt::StrongFocus);
+  if (menu())
+    w += style()->pixelMetric(QStyle::PM_MenuButtonIndicator, &opt, this);
+
+  h += 4;
+  w += 8;
+
+  // WARNING QApplication::globalStrut()
+  // QSize sizeHint = (style()->sizeFromContents(QStyle::CT_PushButton, &opt, QSize(w, h),
+  // this).expandedTo(QApplication::globalStrut()));
+  QSize sizeHint = style()->sizeFromContents(QStyle::CT_PushButton, &opt, QSize(w, h), this);
+
+  return sizeHint;
 }
 
-QSize ActionLabel::sizeHint() const
-{
-    ensurePolished();
+QSize ActionLabel::minimumSizeHint() const { return sizeHint(); }
 
-    int w = 0, h = 0;
-
-    QStyleOptionToolButton opt;
-    initStyleOption(&opt);
-
-    QString s(text());
-    bool empty = s.isEmpty();
-    if (empty)
-        s = QString::fromLatin1("XXXX");
-    QFontMetrics fm = fontMetrics();
-    QSize sz = fm.size(Qt::TextShowMnemonic, s);
-    if(!empty || !w)
-        w += sz.width();
-    if(!empty || !h)
-        h = qMax(h, sz.height());
-    opt.rect.setSize(QSize(w, h)); // PM_MenuButtonIndicator depends on the height
-
-    if (!icon().isNull()) {
-        int ih = opt.iconSize.height();
-        int iw = opt.iconSize.width() + 4;
-        w += iw;
-        h = qMax(h, ih);
-    }
-
-    if (menu())
-        w += style()->pixelMetric(QStyle::PM_MenuButtonIndicator, &opt, this);
-
-    h += 4;
-    w += 8;
-
-    QSize sizeHint = (style()->sizeFromContents(QStyle::CT_PushButton, &opt, QSize(w, h), this).
-                  expandedTo(QApplication::globalStrut()));
-
-    return sizeHint;
-}
-
-QSize ActionLabel::minimumSizeHint() const
-{
-    return sizeHint();
-}
-
-
-} // namespace
-
+}        // namespace QSint
